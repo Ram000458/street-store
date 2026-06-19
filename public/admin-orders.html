@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Orders</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+
+.orders-container{
+    padding:120px 8% 50px;
+}
+
+.order-card{
+    background:white;
+    padding:20px;
+    margin-bottom:20px;
+    border-radius:12px;
+    box-shadow:0 5px 15px rgba(0,0,0,.1);
+}
+
+.order-card h3{
+    margin-bottom:10px;
+}
+
+.order-card p{
+    margin:8px 0;
+}
+
+.status-select{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+}
+
+.update-btn{
+    width:100%;
+    padding:12px;
+    border:none;
+    background:#111;
+    color:white;
+    border-radius:8px;
+    margin-top:10px;
+    cursor:pointer;
+}
+
+</style>
+
+</head>
+<body>
+
+<nav class="navbar">
+
+    <div class="logo">Street Admin</div>
+
+    <ul class="nav-links">
+        <li><a href="admin.html">Products</a></li>
+        <li><a href="admin-orders.html">Orders</a></li>
+    </ul>
+
+</nav>
+
+<section class="orders-container">
+
+    <h1>All Orders</h1>
+
+    <div id="ordersContainer"></div>
+
+</section>
+
+<script>
+
+const token = localStorage.getItem("token");
+
+if(!token){
+
+    alert("Please login first");
+
+    window.location.href =
+    "admin-login.html";
+
+}
+
+async function loadOrders(){
+
+    try{
+
+        const response =
+        await fetch("/api/orders",{
+            headers:{
+                "Authorization":
+                `Bearer ${token}`
+            }
+        });
+
+        const orders =
+        await response.json();
+
+        const container =
+        document.getElementById(
+            "ordersContainer"
+        );
+
+        container.innerHTML = "";
+
+        orders.forEach(order=>{
+
+            container.innerHTML += `
+            <div class="order-card">
+
+                <h3>Order ID</h3>
+                <p>${order._id}</p>
+
+                <p>
+                <strong>Total:</strong>
+                ₹${order.totalAmount}
+                </p>
+
+                <p>
+                <strong>Address:</strong>
+                ${order.shippingAddress}
+                </p>
+
+                <p>
+                <strong>Payment:</strong>
+                ${order.paymentMethod}
+                </p>
+
+                <p>
+                <strong>Status:</strong>
+                ${order.orderStatus}
+                </p>
+
+                <select
+                id="status-${order._id}"
+                class="status-select">
+
+                    <option value="Pending">
+                     Pending
+                    </option>
+
+                    <option value="Processing">
+                    Processing
+                    </option>
+
+                    <option value="Shipped">
+                    Shipped
+                    </option>
+
+                    <option value="Delivered">
+                    Delivered
+                    </option>
+
+                    <option value="Cancelled">
+                    Cancelled
+                    </option>
+
+                </select>
+
+                <button
+                class="update-btn"
+                onclick="updateStatus('${order._id}')">
+
+                Update Status
+
+                </button>
+
+            </div>
+            `;
+        });
+
+    }catch(error){
+
+        console.error(error);
+
+    }
+
+}
+
+async function updateStatus(id){
+
+    const status =
+    document.getElementById(
+        `status-${id}`
+    ).value;
+
+    try{
+
+        const response =
+        await fetch(
+        `/api/orders/${id}`,
+        {
+            method:"PUT",
+
+            headers:{
+                "Content-Type":
+                "application/json",
+
+                "Authorization":
+                `Bearer ${token}`
+            },
+
+            body: JSON.stringify({
+             orderStatus: status
+            })
+        });
+
+        const data =
+        await response.json();
+
+        alert("Order status updated successfully!");
+
+        loadOrders();
+
+    }catch(error){
+
+        console.error(error);
+
+    }
+
+}
+
+loadOrders();
+
+</script>
+
+</body>
+</html>

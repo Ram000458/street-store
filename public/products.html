@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Street Store - Products</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+.products-page{
+    padding:120px 8% 60px;
+}
+
+.page-title{
+    text-align:center;
+    margin-bottom:40px;
+    font-size:2.5rem;
+}
+
+.loading{
+    text-align:center;
+    font-size:20px;
+    margin-top:50px;
+}
+
+.cart-btn{
+    width:100%;
+    border:none;
+    background:#111;
+    color:white;
+    padding:12px;
+    margin-top:15px;
+    cursor:pointer;
+    border-radius:8px;
+    transition:.3s;
+}
+
+.filter-box{
+    display:flex;
+    gap:15px;
+    margin-bottom:30px;
+    justify-content:center;
+    flex-wrap:wrap;
+}
+
+.filter-box input,
+.filter-box select{
+    padding:12px;
+    border:1px solid #ddd;
+    border-radius:8px;
+    min-width:250px;
+}
+
+.cart-btn:hover{
+    background:#ff4d4d;
+}
+</style>
+
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="logo">Street</div>
+
+    <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="products.html">Products</a></li>
+        <li><a href="cart.html">Cart</a></li>
+        <li><a href="login.html">Login</a></li>
+    </ul>
+</nav>
+
+<section class="products-page">
+
+    <div class="filter-box">
+
+        <input
+        type="text"
+        id="searchInput"
+        placeholder="Search Products...">
+
+        <select id="categoryFilter">
+
+            <option value="all">
+            All Categories
+            </option>
+
+            <option value="men">
+            Men
+            </option>
+
+            <option value="women">
+            Women
+            </option>
+
+            <option value="shoes">
+            Shoes
+            </option>
+
+            <option value="accessories">
+            Accessories
+            </option>
+
+        </select>
+
+    </div>
+
+    <div id="productContainer" class="product-grid">
+
+        <div class="loading">
+            Loading Products...
+        </div>
+
+    </div>
+
+</section>
+
+<footer class="footer">
+    <p>© 2026 Street Store. All Rights Reserved.</p>
+</footer>
+<script>
+
+let allProducts = [];
+
+async function loadProducts(){
+
+    try{
+
+        const response =
+        await fetch("/api/products");
+
+        allProducts =
+        await response.json();
+
+        displayProducts(allProducts);
+
+    }catch(error){
+
+        console.error(error);
+
+        document.getElementById(
+        "productContainer"
+        ).innerHTML =
+        "<h2>Failed To Load Products</h2>";
+
+    }
+
+}
+
+function displayProducts(products){
+
+    const container =
+    document.getElementById(
+    "productContainer"
+    );
+
+    container.innerHTML = "";
+
+    if(products.length === 0){
+
+        container.innerHTML =
+        "<h2>No Products Found</h2>";
+
+        return;
+    }
+
+    products.forEach(product=>{
+
+        container.innerHTML += `
+        <div class="card">
+
+            <img
+            src="${product.image}"
+            alt="${product.name}">
+
+            <div class="card-content">
+
+                <h3>${product.name}</h3>
+
+                <p>${product.description}</p>
+
+                <div class="price">
+                    ₹${product.price}
+                </div>
+
+                <a
+                href="product-details.html?id=${product._id}"
+                class="btn">
+                View Product
+                </a>
+
+                <button
+                class="cart-btn"
+                onclick="addToCart('${product._id}')">
+                Add To Cart
+                </button>
+
+            </div>
+
+        </div>
+        `;
+
+    });
+
+}
+function addToCart(id){
+
+    let cart =
+    JSON.parse(
+    localStorage.getItem("cart")
+    ) || [];
+
+    const existingItem =
+    cart.find(
+    item => item.productId === id
+    );
+
+    if(existingItem){
+
+        existingItem.quantity++;
+
+    }else{
+
+        cart.push({
+            productId:id,
+            quantity:1
+        });
+
+    }
+
+    localStorage.setItem(
+    "cart",
+    JSON.stringify(cart)
+    );
+
+    alert("Product Added To Cart!");
+
+}
+function filterProducts(){
+
+    const search =
+    document.getElementById(
+    "searchInput"
+    ).value.toLowerCase();
+
+    const category =
+    document.getElementById(
+    "categoryFilter"
+    ).value.toLowerCase();
+
+    const filtered =
+    allProducts.filter(product=>{
+
+        const matchSearch =
+        product.name
+        .toLowerCase()
+        .includes(search);
+
+        const matchCategory =
+        category === "all" ||
+        product.category
+        .toLowerCase() === category;
+
+        return (
+            matchSearch &&
+            matchCategory
+        );
+
+    });
+
+    displayProducts(filtered);
+
+}
+
+document
+.getElementById("searchInput")
+.addEventListener(
+"input",
+filterProducts
+);
+
+document
+.getElementById("categoryFilter")
+.addEventListener(
+"change",
+filterProducts
+);
+
+loadProducts();
+
+</script>
+</body>
+</html>

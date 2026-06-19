@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Street Store - Checkout</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+
+.checkout-container{
+    max-width:700px;
+    margin:120px auto 50px;
+    background:white;
+    padding:30px;
+    border-radius:12px;
+    box-shadow:0 5px 15px rgba(0,0,0,.1);
+}
+
+.checkout-container h1{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.form-group{
+    margin-bottom:15px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select{
+    width:100%;
+    padding:12px;
+    border:1px solid #ddd;
+    border-radius:8px;
+}
+
+.order-summary{
+    margin:20px 0;
+    padding:15px;
+    background:#f8f8f8;
+    border-radius:8px;
+}
+
+.place-order-btn{
+    width:100%;
+    padding:15px;
+    border:none;
+    background:#111;
+    color:white;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:16px;
+}
+
+.place-order-btn:hover{
+    background:#ff4d4d;
+}
+
+</style>
+
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="logo">Street</div>
+
+    <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="products.html">Products</a></li>
+        <li><a href="cart.html">Cart</a></li>
+    </ul>
+</nav>
+
+<div class="checkout-container">
+
+    <h1>Checkout</h1>
+
+    <form id="checkoutForm">
+
+        <div class="form-group">
+            <input
+            type="text"
+            id="fullName"
+            placeholder="Full Name"
+            required>
+        </div>
+
+        <div class="form-group">
+            <input
+            type="tel"
+            id="phone"
+            placeholder="Phone Number"
+            required>
+        </div>
+
+        <div class="form-group">
+            <textarea
+            id="address"
+            placeholder="Shipping Address"
+            required></textarea>
+        </div>
+
+        <div class="form-group">
+            <select id="paymentMethod">
+                <option value="COD">
+                    Cash On Delivery
+                </option>
+            </select>
+        </div>
+
+        <div class="order-summary">
+            <h3>Order Summary</h3>
+            <p id="totalAmount">Total: ₹0</p>
+        </div>
+
+        <button
+        type="submit"
+        class="place-order-btn">
+        Place Order
+        </button>
+
+    </form>
+
+</div>
+
+<script>
+
+let cart =
+JSON.parse(
+localStorage.getItem("cart")
+) || [];
+
+let total = 0;
+
+async function calculateTotal(){
+
+    try{
+
+        const response =
+        await fetch("/api/products");
+
+        const products =
+        await response.json();
+
+        cart.forEach(id => {
+
+            const product =
+            products.find(
+                p => p._id === id
+            );
+
+            if(product){
+
+                total += product.price;
+
+            }
+
+        });
+
+        document.getElementById(
+        "totalAmount"
+        ).innerText =
+        `Total: ₹${total}`;
+
+    }catch(error){
+
+        console.error(error);
+
+    }
+
+}
+
+calculateTotal();
+
+document
+.getElementById("checkoutForm")
+.addEventListener(
+"submit",
+async (e)=>{
+
+e.preventDefault();
+
+const token =
+localStorage.getItem("token");
+
+if(!token){
+
+alert(
+"Please login first"
+);
+
+window.location.href =
+"login.html";
+
+return;
+
+}
+
+const orderData = {
+
+products: cart.map(id=>({
+product:id,
+quantity:1
+})),
+
+totalAmount: total,
+
+shippingAddress:
+document.getElementById(
+"address"
+).value,
+
+paymentMethod:
+document.getElementById(
+"paymentMethod"
+).value
+
+};
+
+try{
+
+const response =
+await fetch(
+"/api/orders",
+{
+method:"POST",
+headers:{
+"Content-Type":
+"application/json",
+
+"Authorization":
+`Bearer ${token}`
+},
+body:JSON.stringify(
+orderData
+)
+}
+);
+
+const data =
+await response.json();
+
+if(data.success){
+
+alert(
+"Order Placed Successfully!"
+);
+
+localStorage.removeItem(
+"cart"
+);
+
+window.location.href =
+"index.html";
+
+}else{
+
+alert(
+data.message
+);
+
+}
+
+}catch(error){
+
+console.error(error);
+
+alert(
+"Order Failed"
+);
+
+}
+
+});
+
+</script>
+
+</body>
+</html>

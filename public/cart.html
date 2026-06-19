@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Street Store - Cart</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+.cart-page{
+    padding:120px 8% 60px;
+}
+
+.cart-title{
+    text-align:center;
+    margin-bottom:40px;
+}
+
+.cart-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#fff;
+    padding:20px;
+    margin-bottom:15px;
+    border-radius:10px;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
+}
+
+.remove-btn{
+    background:red;
+    color:white;
+    border:none;
+    padding:10px 15px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.total-box{
+    margin-top:30px;
+    text-align:right;
+}
+
+.checkout-btn{
+    margin-top:15px;
+    background:#111;
+    color:white;
+    border:none;
+    padding:12px 25px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.empty-cart{
+    text-align:center;
+    font-size:22px;
+}
+</style>
+
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="logo">Street</div>
+
+    <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="products.html">Products</a></li>
+        <li><a href="cart.html">Cart</a></li>
+    </ul>
+</nav>
+
+<section class="cart-page">
+
+    <h1 class="cart-title">Shopping Cart</h1>
+
+    <div id="cartContainer"></div>
+
+    <div class="total-box">
+        <h2 id="totalPrice">Total: ₹0</h2>
+
+        <button class="checkout-btn"
+        onclick="checkout()">
+        Checkout
+        </button>
+    </div>
+
+</section>
+
+<footer class="footer">
+    <p>© 2026 Street Store. All Rights Reserved.</p>
+</footer>
+
+<script>
+
+async function loadCart(){
+
+let cart =
+JSON.parse(localStorage.getItem("cart")) || [];
+
+const container =
+document.getElementById("cartContainer");
+
+container.innerHTML = "";
+
+if(cart.length === 0){
+
+container.innerHTML =
+'<div class="empty-cart">Your Cart Is Empty</div>';
+
+document.getElementById("totalPrice")
+.innerText = "Total: ₹0";
+
+return;
+
+}
+
+try{
+
+const response =
+await fetch("/api/products");
+
+const products =
+await response.json();
+
+let total = 0;
+
+cart.forEach((item,index)=>{    
+
+const product =
+products.find(
+p => p._id === item.productId
+);
+
+if(product){
+
+total +=
+product.price *
+item.quantity;
+
+container.innerHTML += `
+<div class="cart-item">
+
+<div>
+
+<h3>${product.name}</h3>
+
+<p>
+₹${product.price}
+</p>
+
+<div
+style="
+display:flex;
+gap:10px;
+align-items:center;
+margin-top:10px;">
+
+<button
+onclick="changeQty(${index},-1)">
+-
+</button>
+
+<span>
+${item.quantity}
+</span>
+
+<button
+onclick="changeQty(${index},1)">
++
+</button>
+
+</div>
+</div>
+
+<button
+class="remove-btn"
+onclick="removeItem(${index})">
+
+Remove
+
+</button>
+
+</div>
+`;
+
+}
+
+});
+
+document.getElementById(
+"totalPrice"
+).innerText =
+`Total: ₹${total}`;
+
+}catch(error){
+
+console.error(error);
+
+}
+
+}
+
+function removeItem(index){
+
+let cart =
+JSON.parse(localStorage.getItem("cart")) || [];
+
+cart.splice(index,1);
+
+localStorage.setItem(
+"cart",
+JSON.stringify(cart)
+);
+
+loadCart();
+
+}
+
+function changeQty(
+index,
+change
+){
+
+let cart =
+JSON.parse(
+localStorage.getItem("cart")
+) || [];
+
+cart[index].quantity += change;
+
+if(
+cart[index].quantity <= 0
+){
+
+cart.splice(index,1);
+
+}
+
+localStorage.setItem(
+"cart",
+JSON.stringify(cart)
+);
+
+loadCart();
+
+}
+
+function checkout(){
+
+window.location.href =
+"checkout.html";
+
+}
+
+loadCart();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Product Details</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+
+.product-page{
+    padding:120px 8%;
+}
+
+.product-container{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:50px;
+    align-items:center;
+}
+
+.product-image img{
+    width:100%;
+    border-radius:15px;
+    box-shadow:0 5px 20px rgba(0,0,0,.1);
+}
+
+.product-info h1{
+    margin-bottom:15px;
+}
+
+.product-price{
+    font-size:32px;
+    font-weight:bold;
+    color:#ff4d4d;
+    margin-bottom:20px;
+}
+
+.product-description{
+    margin-bottom:20px;
+    line-height:1.7;
+}
+
+.product-meta{
+    margin-bottom:25px;
+}
+
+.product-meta p{
+    margin-bottom:10px;
+}
+
+.stock{
+    color:green;
+    font-weight:bold;
+}
+
+.out-stock{
+    color:red;
+    font-weight:bold;
+}
+
+.cart-btn{
+    width:100%;
+    padding:15px;
+    border:none;
+    background:#111;
+    color:white;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:18px;
+}
+
+.cart-btn:hover{
+    background:#ff4d4d;
+}
+
+.loading{
+    text-align:center;
+    font-size:24px;
+}
+
+@media(max-width:768px){
+
+.product-container{
+    grid-template-columns:1fr;
+}
+
+}
+
+</style>
+
+</head>
+<body>
+
+<nav class="navbar">
+
+<div class="logo">Street</div>
+
+<ul class="nav-links">
+<li><a href="index.html">Home</a></li>
+<li><a href="products.html">Products</a></li>
+<li><a href="cart.html">Cart</a></li>
+</ul>
+
+</nav>
+
+<section class="product-page">
+
+<div id="productDetails">
+
+<div class="loading">
+Loading Product...
+</div>
+
+</div>
+
+</section>
+
+<footer class="footer">
+<p>© 2026 Street Store. All Rights Reserved.</p>
+</footer>
+
+<script>
+
+const params =
+new URLSearchParams(
+window.location.search
+);
+
+const productId =
+params.get("id");
+
+async function loadProduct(){
+
+try{
+
+const response =
+await fetch("/api/products");
+
+const products =
+await response.json();
+
+const product =
+products.find(
+p => p._id === productId
+);
+
+const container =
+document.getElementById(
+"productDetails"
+);
+
+if(!product){
+
+container.innerHTML =
+"<h2>Product Not Found</h2>";
+
+return;
+
+}
+
+container.innerHTML = `
+
+<div class="product-container">
+
+<div class="product-image">
+
+<img
+src="${product.image}"
+alt="${product.name}">
+
+</div>
+
+<div class="product-info">
+
+<h1>${product.name}</h1>
+
+<div class="product-price">
+₹${product.price}
+</div>
+
+<div class="product-description">
+${product.description}
+</div>
+
+<div class="product-meta">
+
+<p>
+<strong>Category:</strong>
+${product.category}
+</p>
+
+<p>
+<strong>Stock:</strong>
+
+<span class="${
+product.stock > 0
+? 'stock'
+: 'out-stock'
+}">
+${
+product.stock > 0
+? 'In Stock'
+: 'Out Of Stock'
+}
+</span>
+
+</p>
+
+</div>
+
+<button
+class="cart-btn"
+onclick="addToCart('${product._id}')">
+
+Add To Cart
+
+</button>
+
+</div>
+
+</div>
+
+`;
+
+}catch(error){
+
+console.error(error);
+
+}
+
+}
+
+function addToCart(id){
+
+let cart =
+JSON.parse(
+localStorage.getItem("cart")
+) || [];
+
+cart.push(id);
+
+localStorage.setItem(
+"cart",
+JSON.stringify(cart)
+);
+
+alert(
+"Product Added To Cart!"
+);
+
+}
+
+loadProduct();
+
+</script>
+
+</body>
+</html>

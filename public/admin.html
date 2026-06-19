@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Street Admin Dashboard</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+.admin-container{
+    padding:120px 8% 50px;
+}
+
+.admin-title{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.form-box{
+    background:#fff;
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0 5px 15px rgba(0,0,0,.1);
+    margin-bottom:40px;
+}
+
+.form-group{
+    margin-bottom:15px;
+}
+
+.form-group input,
+.form-group textarea{
+    width:100%;
+    padding:12px;
+    border:1px solid #ddd;
+    border-radius:8px;
+}
+
+.add-btn{
+    width:100%;
+    padding:12px;
+    border:none;
+    background:#111;
+    color:white;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.product-list{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:20px;
+}
+
+.product-card{
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    box-shadow:0 5px 15px rgba(0,0,0,.1);
+}
+
+.product-card img{
+    width:100%;
+    height:200px;
+    object-fit:cover;
+    border-radius:8px;
+}
+
+.delete-btn{
+    width:100%;
+    margin-top:10px;
+    background:red;
+    color:white;
+    border:none;
+    padding:10px;
+    border-radius:8px;
+    cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="logo">Street Admin</div>
+
+    <ul class="nav-links">
+        <li><a href="index.html">Store</a></li>
+        <li><a href="products.html">Products</a></li>
+        <li><a href="admin-login.html">Admin</a></li>
+        <li>
+<button
+onclick="logout()"
+style="
+background:red;
+color:white;
+border:none;
+padding:8px 12px;
+border-radius:6px;
+cursor:pointer;">
+Logout
+</button>
+</li>
+    </ul>
+</nav>
+
+<div class="admin-container">
+
+    <h1 class="admin-title">Admin Dashboard</h1>
+
+    <div class="form-box">
+
+        <form id="productForm">
+
+            <div class="form-group">
+                <input type="text" id="name" placeholder="Product Name" required>
+            </div>
+
+            <div class="form-group">
+                <textarea id="description" placeholder="Description" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <input type="number" id="price" placeholder="Price" required>
+            </div>
+
+            <div class="form-group">
+                <input type="text" id="image" placeholder="Image URL" required>
+            </div>
+
+            <div class="form-group">
+                <input type="text" id="category" placeholder="Category" required>
+            </div>
+
+            <div class="form-group">
+                <input type="number" id="stock" placeholder="Stock Quantity" required>
+            </div>
+
+            <button class="add-btn" type="submit">
+                Add Product
+            </button>
+
+        </form>
+
+    </div>
+
+    <div id="productList" class="product-list"></div>
+
+</div>
+
+<script>
+
+const token = localStorage.getItem("token");
+
+if(!token){
+
+    alert("Please login first");
+
+    window.location.href =
+    "admin-login.html";
+
+}
+
+const API_URL = "/api/products";
+
+async function loadProducts(){
+
+    try{
+
+        const response =
+        await fetch(API_URL);
+
+        const products =
+        await response.json();
+
+        const productList =
+        document.getElementById("productList");
+
+        productList.innerHTML = "";
+
+        products.forEach(product=>{
+
+            productList.innerHTML += `
+            <div class="product-card">
+
+                <img src="${product.image}" alt="">
+
+                <h3>${product.name}</h3>
+
+                <p>${product.description}</p>
+
+                <p><strong>₹${product.price}</strong></p>
+
+                <p>Stock: ${product.stock}</p>
+
+                <button
+                class="delete-btn"
+                onclick="deleteProduct('${product._id}')">
+                Delete Product
+                </button>
+
+            </div>
+            `;
+
+        });
+
+    }catch(error){
+
+        console.error(error);
+
+    }
+
+}
+
+document
+.getElementById("productForm")
+.addEventListener("submit",async(e)=>{
+
+    console.log("FORM SUBMITTED");
+    e.preventDefault();
+
+    e.preventDefault();
+
+    const product = {
+
+        name:
+        document.getElementById("name").value,
+
+        description:
+        document.getElementById("description").value,
+
+        price:
+        Number(
+            document.getElementById("price").value
+        ),
+
+        image:
+        document.getElementById("image").value,
+
+        category:
+        document.getElementById("category").value,
+
+        stock:
+        Number(
+            document.getElementById("stock").value
+        )
+
+    };
+
+   const response = await fetch(API_URL,{
+    method:"POST",
+    headers:{
+        "Content-Type":"application/json",
+        "Authorization": `Bearer ${token}`
+    },
+    body:JSON.stringify(product)
+});
+
+const data = await response.json();
+
+console.log("STATUS:", response.status);
+console.log("RESPONSE:", data);
+
+alert("Status: " + response.status);
+
+    document
+    .getElementById("productForm")
+    .reset();
+
+    loadProducts();
+
+});
+
+async function deleteProduct(id){
+
+    await fetch(`${API_URL}/${id}`,{
+        method:"DELETE",
+        headers:{
+            "Authorization": `Bearer ${token}`
+        }
+    });
+
+    loadProducts();
+
+}
+
+
+loadProducts();
+
+function logout(){
+
+    localStorage.removeItem("token");
+
+    alert("Logged Out");
+
+    window.location.href =
+    "admin-login.html";
+
+}
+
+</script>
+
+</body>
+</html>
